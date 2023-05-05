@@ -30,5 +30,4 @@ This script does all the leg work of configuring and enabl ing the AD DC. When r
 - subnets are space delimited and only /24 is allowed, planned to extend this. Must be the Subnet ID (ex: 192.168.1.0)
 - Domain FQDN is as described (ex: example.com)
 The rest of the information it will attempt to auto discover.
-| :warning:         | Currently no Error checking on inputs is configured
-|-------------------|:------------------|
+:warning: Currently no Error checking on inputs is configured
