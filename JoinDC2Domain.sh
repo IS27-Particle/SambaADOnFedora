@@ -1,5 +1,12 @@
 #!/bin/bash
 
+logfile="/var/log/fedora-samba-dc_joindc2domain.log"
+
+if [ -z $SCRIPT ]; then
+    script $logfile -c "/bin/bash -c \"SCRIPT=1 sh $(realpath $0) $*\""
+    exit
+fi
+
 ADDC_Hostname="$HOSTNAME"
 read -p "Enter the subnets /24 space delimited, that should be allowed to synchronize its time: " -a subnets
 read -p "Enter the fqdn of the domain (example.com): " Domain_Name
