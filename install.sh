@@ -1,6 +1,14 @@
 #!/bin/bash
 
-dnf update
+logfile="/var/log/fedora-samba-dc_install.log"
+
+if [ -z $SCRIPT ]; then
+    script $logfile -c "/bin/bash -c \"SCRIPT=1 sh $(realpath $0) $*\""
+    exit
+fi
+
+echo "Updating the system"
+dnf update -y
 # dnf-plugins-core is required for builddep - https://dnf-plugins-core.readthedocs.io/en/latest/builddep.html
 # builddep - https://wiki.samba.org/index.php/Package_Dependencies_Required_to_Build_Samba#Fedora
 # nano - preferred editor
@@ -14,49 +22,61 @@ dnf update
 # openssh-server - adds an additional access method and compatibility with ansible
 # net-tools - common network troubleshooting utilities
 
+echo "Installing required software packages"
 dnf install dnf-plugins-core nano wget attr acl lmdb-devel perl-JSON krb5-workstation openssl-devel automake patch rsync openssh-server sssd-client net-tools
-
 # default repo urls populated incorrectly due to containerized environment, the following fixes this
+echo "Fixing repo URLs if necessary"
 sed 's/\SRPMS/x86_64/g' /etc/yum.repos.d/fedora-updates.repo > /etc/yum.repos.d/fedora-updates.repo.new
 mv /etc/yum.repos.d/fedora-updates.repo.new /etc/yum.repos.d/fedora-updates.repo
 sed 's/\SRPMS/x86_64/g' /etc/yum.repos.d/fedora-updates-modular.repo > /etc/yum.repos.d/fedora-updates-modular.repo.new
 mv /etc/yum.repos.d/fedora-updates-modular.repo.new /etc/yum.repos.d/fedora-updates-modular.repo
 
 # installs dependencies to build Samba from source
+echo "Installing Build dependencies"
 dnf builddep libldb samba
 
 # RHEL Samba package does not support AD setup - https://wiki.samba.org/index.php/Distribution-specific_Package_Installation#Version_7_and_8
 # download Samba source code - https://wiki.samba.org/index.php/Build_Samba_from_Source#Stable_Version_.28Recommended.29
-wget https://download.samba.org/pub/samba/samba-latest.tar.gz -P /tmp 
+echo "Downloading latest Samba source"
+wget https://download.samba.org/pub/samba/samba-latest.tar.gz -P /tmp
 
 # download ntp server source code due to build requirement - https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_DC
+echo "Downloading ntp v4.2.8p15"
 wget https://archive.ntp.org/ntp4/ntp-4.2/ntp-4.2.8p15.tar.gz -O /tmp/ntp-latest.tar.gz
 
 # download osync for sysvol replication - https://wiki.samba.org/index.php/Bidirectional_Rsync/osync_based_SysVol_replication_workaround
+echo "Downloading osync v1.3-rc3"
 wget https://github.com/deajan/osync/archive/refs/tags/v1.3-rc3.tar.gz -O /tmp/osync-latest.tar.gz
 
 # download NTP source code Patch - https://bugs.ntp.org/show_bug.cgi?id=3741
+echo "Downloading ntp source patch"
 wget --user-agent=Mozilla https://bugs.ntp.org/attachment.cgi?id=1814 -O /tmp/NTP.patch
 
 # Validation step to ensure all old configs are purged - https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller#Preparing_the_Installation
+echo "Removing any existent Samba configs"
 rm -f $(smbd -b | grep "CONFIGFILE" | sed '0,/|/s// /' | awk '{print $2}')
 
 # extract Samba source - https://wiki.samba.org/index.php/Build_Samba_from_Source#Extracting_the_Source_Package
+echo "Extract samba source"
 mkdir /tmp/samba-latest
 tar -zxf /tmp/samba-latest.tar.gz -C /tmp/samba-latest 
 
 # Configure Samba - https://wiki.samba.org/index.php/Build_Samba_from_Source#configure
+echo "Configure the build"
 pushd /tmp/samba-latest
 mv ./samba-*/* ./
 ./configure
 
 # make - https://wiki.samba.org/index.php/Build_Samba_from_Source#make
+echo "Build the source"
 make -j 2
 
 # make install - https://wiki.samba.org/index.php/Build_Samba_from_Source#make_install
+echo "Install from source"
 make install
 
 # Add binary paths to PATH - https://wiki.samba.org/index.php/Build_Samba_from_Source#Adding_Samba_Commands_to_the_.24PATH_Variable
+echo "Permanently add to PATH and source to current session"
 cat << "EOF" > /etc/profile.d/samba.sh
 pathmunge /usr/local/samba/sbin/
 pathmunge /usr/local/samba/bin/
@@ -64,8 +84,10 @@ EOF
 source /etc/bashrc
 
 # Create the systemd unit, mask independent Samba features
+echo "Mask and Disable smbd nmbd winbind in systemd"
 systemctl mask smbd nmbd winbind
 systemctl disable smbd nmbd winbind
+echo "Create the samba-ad-dc systemd unit"
 cat << EOF > /etc/systemd/system/samba-ad-dc.service
 [Unit]
 Description=Samba Active Directory Domain Controller
@@ -83,24 +105,33 @@ EOF
 systemctl daemon-reload
 
 #Configure Kerberos - https://wiki.samba.org/index.php/Joining_a_Samba_DC_to_an_Existing_Active_Directory#Kerberos
+echo "Configure Kerberos with default configs"
 cat << EOF > /etc/krv5.conf
 $(awk 'Begin{p=0;f1=0;f2=0} /^\[libdefaults\]/ {p=1;} /^    dns_lookup_realm = / {if (p) {print "    "$1" = false"; skip=1; f1=1}} /^    dns_lookup_kdc = / {if (p) {print "    "$1" = true"; skip=1; f2=1}} /^\[[^(libdefaults\])]/ {if (p) {p=0; add=""; if (! f1) {add="    dns_lookup_realm = false\n"add} if (! f2) {add="    dns_lookup_kdc = true\n"add} print add}} /.*/ {if (skip) {skip=0;} else print $0}' /etc/krb5.conf)
 EOF
-
 popd
+
 #Install ntp server - https://wiki.samba.org/index.php/Time_Synchronisation
+echo "Extract ntp source"
 mkdir /tmp/ntp-latest
 tar -zxf /tmp/ntp-latest.tar.gz -C /tmp/ntp-latest
 pushd /tmp/ntp-latest
 mv ./*/* ./
 mv /tmp/NTP.patch ./
+
+echo "Patch the code"
 patch -ruN -p1 < NTP.patch
+echo "Configure the build"
 ./configure --enable-ntp-signd
+echo "Build the source"
 make
+echo "Install from source"
 make install
+echo "Setup samba environment using systemd-timesync"
 mkdir -p /usr/local/samba/var/lib/ntp_signd/
 chown root:systemd-timesync /usr/local/samba/var/lib/ntp_signd/
 chmod u=rwx,g=rx,o-rwx /usr/local/samba/var/lib/ntp_signd
+echo "Install the systemd unit"
 cat << EOF > /etc/systemd/system/ntpd.service
 
 [Unit]
@@ -117,6 +148,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
+echo "Configure NTP config"
 cat << EOF > /etc/ntp.conf
 
 # Local clock. Note that is not the "localhost" address!
@@ -149,14 +181,18 @@ restrict 127.0.0.1
 tinker panic 0
 EOF
 systemctl daemon-reload
+echo "Enable and run the ntp service"
 systemctl enable ntpd --now
 popd
 
 # Configure winbindd - https://wiki.samba.org/index.php/Configuring_Winbindd_on_a_Samba_AD_DC
+echo "Link necessary winbind libraries"
 ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib64/
 ln -s /lib64/libnss_winbind.so.2 /lib64/libnss_winbind.so
 ldconfig
+echo "Add nsswitch allowances for winbind"
 cat << EOF > /etc/nsswitch.conf
 $(awk 'BEGIN{skip=0} /^(passwd:|group:) .*$/ {print $0" winbind";skip=1} /.*/ {if (skip) {skip=0} else print $0}' /etc/nsswitch.conf)
 EOF
+echo "Enable pam authentication for winbind"
 ln -s /usr/local/samba/lib/security/pam_winbind.so /lib64/security/
