@@ -39,3 +39,6 @@ This script does all the leg work of configuring and enabl ing the AD DC. When r
 - Domain FQDN is as described (ex: example.com) The rest of the information it will attempt to auto discover.
 
 :warning: Currently no Error checking on inputs is configured
+
+## Proxmox LXC
+Download - https://is27.duckdns.org/nextcloud/s/8cjJsndZfaT94kN
