@@ -150,6 +150,7 @@ tinker panic 0
 EOF
 systemctl daemon-reload
 systemctl enable ntpd --now
+popd
 
 # Configure winbindd - https://wiki.samba.org/index.php/Configuring_Winbindd_on_a_Samba_AD_DC
 ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib64/
