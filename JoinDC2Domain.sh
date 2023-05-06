@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ADDC_Hostname="$HOSTNAME"
 read -p "Enter the subnets /24 space delimited, that should be allowed to synchronize its time: " -a subnets
 read -p "Enter the fqdn of the domain (example.com): " Domain_Name
