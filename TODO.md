@@ -3,7 +3,7 @@
 - [ ] SELinux Profiles and Profile add-ons for feature subsets
 - [x] Upload Install.Sh
 - [x] ~~Upload Proxmox LXC Template~~ Publish Link to README
-- [ ] Upload LXD LXC Template
+- [ ] ~~Upload LXD LXC Template~~ Publish Link to README
 - [ ] Write directions for Full Installation
 - [ ] Write directions for Proxmox LXC Installation
 - [ ] Write directions for LXD LXC Installation
