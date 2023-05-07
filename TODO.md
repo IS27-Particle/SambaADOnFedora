@@ -2,7 +2,7 @@
 - [ ] Error checking for inputs and discovered items
 - [ ] SELinux Profiles and Profile add-ons for feature subsets
 - [x] Upload Install.Sh
-- [ ] Upload Proxmox LXC Template
+- [x] ~~Upload Proxmox LXC Template~~ Publish Link to README
 - [ ] Upload LXD LXC Template
 - [ ] Write directions for Full Installation
 - [ ] Write directions for Proxmox LXC Installation
