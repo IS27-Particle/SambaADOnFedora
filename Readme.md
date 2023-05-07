@@ -29,6 +29,13 @@ reboot
 
 if you'd like to enable SELINUX in the future see the troubleshooting article on the [wiki](https://wiki.samba.org/index.php/Troubleshooting_SELinux_on_a_Samba_AD_DC)
 
+## install.sh
+
+This script will build and install: SambaADDC, ntp, osync, winbind and all other necessary packages
+
+Logging is done via typescript
+Log File Location: /var/log/fedora-samba-dc_install.log
+
 ## JoinDC2Domain.sh
 
 This is a companion script to the install.sh and is found on the lxc template (Proxmox or LXD), all coming soon.
@@ -37,6 +44,9 @@ This script does all the leg work of configuring and enabl ing the AD DC. When r
 
 - subnets are space delimited and only /24 is allowed, planned to extend this. Must be the Subnet ID (ex: 192.168.1.0)
 - Domain FQDN is as described (ex: example.com) The rest of the information it will attempt to auto discover.
+
+Logging is done via typescript
+Log File Location: /var/log/fedora-samba-dc_joindc2domain.log
 
 :warning: Currently no Error checking on inputs is configured
 
