@@ -9,3 +9,6 @@
 - [ ] Write directions for LXD LXC Installation
 - [ ] NTP is configured for containerized environment, account for full build
 - [ ] Output status messages to log in JoinDC2Domain.sh
+- [ ] Design Dockerfile for docker image
+- [ ] Write instructions for docker and docker compose
+- [ ] Design example infrastructure 
