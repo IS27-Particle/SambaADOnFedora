@@ -51,7 +51,8 @@ Log File Location: /var/log/fedora-samba-dc_joindc2domain.log
 :warning: Currently no Error checking on inputs is configured
 
 ## Installation
- - [Full Install](FullInstall.md)
- - [Proxmox LXC](ProxmoxLXC.md)
- - LXD :sparkle: **Coming Soon**
- - Docker :sparkle: **Coming Soon**
+
+- [Full Install](FullInstall.md)
+- [Proxmox LXC](ProxmoxLXC.md)
+- LXD :sparkle: **Coming Soon**
+- Docker :sparkle: **Coming Soon**

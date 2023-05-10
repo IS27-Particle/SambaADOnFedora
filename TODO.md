@@ -11,4 +11,5 @@
 - [ ] Output status messages to log in JoinDC2Domain.sh
 - [ ] Design Dockerfile for docker image
 - [ ] Write instructions for docker and docker compose
-- [ ] Design example infrastructure 
+- [ ] Design example infrastructure
+- [ ] Write script to create DC - DCCreateDomain.sh 
